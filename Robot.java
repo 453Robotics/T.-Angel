@@ -8,14 +8,20 @@
 package frc.robot;
 
 
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.ExampleSubsystem;
+
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -31,8 +37,15 @@ public class Robot extends TimedRobot {
   Joystick flightStick = new Joystick(1);
   Joystick flightStickTwo = new Joystick(2);
   Joystick arcadeStick = new Joystick(3);
-
-
+  private static final int leftDeviceID = 0;
+  private static final int rightDeviceID = 1;
+  private static final int leftFDeviceID = 3;
+  private static final int rightFDeviceID = 4;
+  CANSparkMax m_leftMotor = new CANSparkMax(leftDeviceID, MotorType.kBrushless);
+  CANSparkMax m_rightMotor = new CANSparkMax(rightDeviceID , MotorType.kBrushless);
+  CANSparkMax m_leftMotorf = new CANSparkMax(leftFDeviceID, MotorType.kBrushless);
+  CANSparkMax m_rightMotorf = new CANSparkMax(rightFDeviceID , MotorType.kBrushless);
+  DifferentialDrive m_myRobot = new DifferentialDrive(m_leftMotor, m_rightMotor);
   Command m_autonomousCommand;
   SendableChooser<Command> m_chooser = new SendableChooser<>();
   SendableChooser<Integer> controlChooser = new SendableChooser<>();
@@ -54,7 +67,8 @@ public class Robot extends TimedRobot {
     controlChooser.addOption("Flight Joystick Two", 2);
     controlChooser.addOption("Arcade Stick", 3);
 
-
+    m_rightMotorf.follow(m_rightMotor);
+    m_leftMotorf.follow(m_leftMotor);
   }
 
   /**
@@ -146,7 +160,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void testPeriodic() {
-    if(controlChooser.getSelected() == 0){
+	if(controlChooser.getSelected() == 0){
       m_myRobot.arcadeDrive(-xBoxJoy.getY(Hand.kLeft), xBoxJoy.getX(Hand.kLeft));//arcade drive, leftJoystick=foward/backwards and turn
     }
 
@@ -160,12 +174,12 @@ public class Robot extends TimedRobot {
       if(flightStick.getRawAxis(1) <= -.05 || flightStick.getRawAxis(1) >= .05){
         //forward or back
         SmartDashboard.putNumber("JoyY", flightStick.getRawAxis(1));//
-        robotd.arcadeDrive(flightStick.getRawAxis(1) * -1, 0);
+        m_myRobot.arcadeDrive(flightStick.getRawAxis(1) * -1, 0);
       }
       if(flightStick.getRawAxis(0) >= .1 || flightStick.getRawAxis(0) <= -.1){
         //turning
         SmartDashboard.putNumber("JoyX", flightStick.getRawAxis(0));
-        robotd.arcadeDrive(0, flightStick.getRawAxis(0));
+        m_myRobot.arcadeDrive(0, flightStick.getRawAxis(0));
       }
     }
       
@@ -176,5 +190,5 @@ public class Robot extends TimedRobot {
       }
     }
       //if forward both motors go
-      m_leadMotor.set(m_joystick.getY());
+     // m_leadMotor.set(m_joystick.getY());
   }
