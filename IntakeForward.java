@@ -26,6 +26,8 @@ public class IntakeForward extends Command {
   @Override
   protected void execute() {
     Intake.DubSolenoid.set(Value.kForward);
+
+    Intake.intakeMotor.set(-Intake.xBoxJoy.getRawAxis(3)/2); 
   }
 
   // Make this return true when this Command no longer needs to run execute()
