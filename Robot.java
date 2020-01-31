@@ -12,7 +12,7 @@ package frc.robot;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import edu.wpi.first.wpilibj.GenericHID.Hand;
+
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Command;
@@ -20,7 +20,6 @@ import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.commands.IntakeMoveMotor;
 import frc.robot.subsystems.Intake;
 import frc.robot.Constants.motorIDConst;
 
@@ -60,7 +59,6 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     m_oi = new OI();
-    m_chooser.setDefaultOption("Default Auto", new IntakeMoveMotor());
     // chooser.addOption("My Auto", new MyAutoCommand());
     SmartDashboard.putData("Auto mode", m_chooser);
 
@@ -162,34 +160,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void testPeriodic() {
-	if(controlChooser.getSelected() == 0){
-      m_myRobot.arcadeDrive(-xBoxJoy.getY(Hand.kLeft), xBoxJoy.getX(Hand.kLeft));//arcade drive, leftJoystick=foward/backwards and turn
-    }
 
-    else if(controlChooser.getSelected() == 1){
-      m_myRobot.tankDrive(flightStick.getY(), flightStickTwo.getY()); // flight stick tankdrive
-    }
-    else if(controlChooser.getSelected() == 2){
-      m_myRobot.tankDrive(-xBoxJoy.getY(Hand.kLeft), xBoxJoy.getX(Hand.kRight)); // xBox Tankdrive
-    }
-    else if(controlChooser.getSelected() == 3){// Flight stick arcade drive
-      if(flightStick.getRawAxis(1) <= -.05 || flightStick.getRawAxis(1) >= .05){
-        //forward or back
-        SmartDashboard.putNumber("JoyY", flightStick.getRawAxis(1));//
-        m_myRobot.arcadeDrive(flightStick.getRawAxis(1) * -1, 0);
-      }
-      if(flightStick.getRawAxis(0) >= .1 || flightStick.getRawAxis(0) <= -.1){
-        //turning
-        SmartDashboard.putNumber("JoyX", flightStick.getRawAxis(0));
-        m_myRobot.arcadeDrive(0, flightStick.getRawAxis(0));
-      }
-    }
-      
-      else{
-        SmartDashboard.putString("nothing?", "yes");
-        m_leftMotor.set(0);
-        m_rightMotor.set(0);
-      }
     }
       //if forward both motors go
      // m_leadMotor.set(m_joystick.getY());
