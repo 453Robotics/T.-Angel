@@ -25,9 +25,9 @@ public class ShootingButton extends CommandBase {
   @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
   Shooter m_subsystem;
   //Adjustable speed on right motor
-  static double adjustablespeed = 0.45;
-  Joystick shootJoystick = new Joystick(0);
 
+  static Joystick shootJoystick = new Joystick(0);
+  static double adjustablespeed = 0.45;
   /**
    * Creates a new ExampleCommand.
    *
@@ -44,6 +44,10 @@ public class ShootingButton extends CommandBase {
   public void initialize() {
   }
 
+  double map(double x, double in_min, double in_max, double out_min, double out_max){
+    return (x  - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
   // displays value for speed
   public static double adjustablespeeddisplay() {
     return adjustablespeed;
@@ -53,15 +57,16 @@ public class ShootingButton extends CommandBase {
   @Override
   public void execute() {
     SmartDashboard.putNumber("Right  Motor Speed", ShootingButton.adjustablespeeddisplay());
-    
+    double shootspeed = map(adjustablespeed, -1, 1, 0, 1);
     if(shootJoystick.getRawButton(4) && adjustablespeed > 0.00)
     {
-      adjustablespeed -= .05;
+
+      adjustablespeed -= shootspeed;
     }
     
     if(shootJoystick.getRawButton(5))
     {
-      adjustablespeed += .05;
+      adjustablespeed += shootspeed;// was 0.05
     }
      
     if(shootJoystick.getRawButton(0))

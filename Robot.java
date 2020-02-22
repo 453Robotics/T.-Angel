@@ -1,176 +1,212 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
 
 package frc.robot;
 
-//import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-//import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.torontocodingcollective.subsystem.TSubsystem;
 
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.GenericHID.Hand;
+import edu.wpi.first.wpilibj.Relay.Value;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.driveTrain;
-import frc.robot.Constants.motorIDConst;
+import frc.robot.commands.AutonomousCommand;
+import frc.robot.oi.AutoSelector;
+import frc.robot.oi.OI;
+import frc.robot.subsystems.CameraSubsystem;
+import frc.robot.subsystems.CanDriveSubsystem;
+import frc.robot.subsystems.ControlPanelSubsystem;
+import frc.robot.subsystems.PneumaticsSubsystem;
+import frc.robot.subsystems.PowerSubsystem;
 
 /**
  * The VM is configured to automatically run this class, and to call the
- * functions corresponding to each mode, as described in the TimedRobot
+ * functions corresponding to each mode, as described in the IterativeRobot
  * documentation. If you change the name of this class or the package after
- * creating this project, you must also update the build.gradle file in the
- * project.
+ * creating this project, you must also update the manifest file in the resource
+ * directory.
  */
 public class Robot extends TimedRobot {
- // public static Intake m_subsystem = new Intake();
-  public static OI m_oi;
 
-  public static driveTrain m_driveTrain = new driveTrain();
+    public static final List<TSubsystem>        subsystemLs             = new ArrayList<TSubsystem>();
 
-  /*
-  Joystick flightStick = new Joystick(1);
-  public static Joystick flightStickTwo = new Joystick(2);
-  Joystick arcadeStick = new Joystick(3);
-  private Joystick m_leftStick;
- // private static WPI_TalonSRX m_leftMotor = new WPI_TalonSRX(leftDeviceID);
- // private static WPI_TalonSRX m_rightMotor = new WPI_TalonSRX(rightDeviceID);
-  private static CANSparkMax m_leftMotor = new CANSparkMax(motorIDConst.leftDeviceID, MotorType.kBrushless);
-  private static CANSparkMax m_rightMotor = new CANSparkMax(motorIDConst.rightDeviceID, MotorType.kBrushless);
- // TalonSRX m_leftMotorf = new TalonSRX(leftFDeviceID);
-  //TalonSRX m_rightMotorf = new TalonSRX(rightFDeviceID);
-  CANSparkMax m_leftMotorf = new CANSparkMax(motorIDConst.leftFDeviceID, MotorType.kBrushless);
-  CANSparkMax m_rightMotorf = new CANSparkMax(motorIDConst.rightFDeviceID, MotorType.kBrushless);
-  DifferentialDrive m_myRobot = new DifferentialDrive(m_leftMotor, m_rightMotor);
-  Command m_autonomousCommand;
-  SendableChooser<Command> m_chooser = new SendableChooser<>();
-  SendableChooser<Integer> controlChooser = new SendableChooser<>();
- */
+    public static final CanDriveSubsystem       driveSubsystem          = new CanDriveSubsystem();
+    //public static final PneumaticsSubsystem     pneumaticsSubsystem     = new PneumaticsSubsystem();
+    //public static final PowerSubsystem          powerSubsystem          = new PowerSubsystem();
+    public static final CameraSubsystem         cameraSubsystem         = new CameraSubsystem();
+    public static final ControlPanelSubsystem   controlPanelSubsystem   = new ControlPanelSubsystem();
+    //public static final WPI_VictorSPX intake = new WPI_VictorSPX(10);
+    public static final Relay m_relay = new Relay(0);
+    public static final Joystick flightStick = new Joystick(0);
+    public static OI                            oi;
+    public static final int kRelayForwardButton = 3;
+    public static final int kRelayBackwardButton= 4;
 
-  /**
-   * This function is run when the robot is first started up and should be
-   * used for any initialization code.
-   */
-  @Override
-  public void robotInit() {
-    m_oi = new OI();
 
-    SmartDashboard.putNumber("Motor Output", driveTrain.m_leftMotor.get());
-    // chooser.addOption("My Auto", new MyAutoCommand());
-    /*
-    SmartDashboard.putData("Auto mode", m_chooser);
 
-    controlChooser.setDefaultOption("xBox Joystick-Arcade Drive", 0);
-    controlChooser.addOption("Flight Joystick", 1);
-    controlChooser.addOption("Flight Joystick Two", 2);
-    controlChooser.addOption("Arcade Stick", 3);
+    private Command                             autoCommand;
 
-    m_rightMotorf.follow(m_rightMotor);
-    m_leftMotorf.follow(m_leftMotor);
-    */
-  }
+    // Add all of the subsystems to the subsystem list
+    static {
+        subsystemLs.add(driveSubsystem);
+        //subsystemLs.add(pneumaticsSubsystem);
+        //subsystemLs.add(powerSubsystem);
+        subsystemLs.add(cameraSubsystem);
+        subsystemLs.add(controlPanelSubsystem);
+    }
 
-  /**
-   * This function is called every robot packet, no matter the mode. Use
-   * this for items like diagnostics that you want ran during disabled,
-   * autonomous, teleoperated and test.
-   *
-   * <p>This runs after the mode specific periodic functions, but before
-   * LiveWindow and SmartDashboard integrated updating.
-   */
-  @Override
-  public void robotPeriodic() {
-  }
-
-  /**
-   * This function is called once each time the robot enters Disabled mode.
-   * You can use it to reset any subsystem information you want to clear when
-   * the robot is disabled.
-   */
-  @Override
-  public void disabledInit() {
-  }
-
-  @Override
-  public void disabledPeriodic() {
-    Scheduler.getInstance().run();
-  }
-
-  /**
-   * This autonomous (along with the chooser code above) shows how to select
-   * between different autonomous modes using the dashboard. The sendable
-   * chooser code works with the Java SmartDashboard. If you prefer the
-   * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-   * getString code to get the auto name from the text box below the Gyro
-   *
-   * <p>You can add additional auto modes by adding additional commands to the
-   * chooser code above (like the commented example) or additional comparisons
-   * to the switch structure below with additional strings & commands.
-   */
-  @Override
-  public void autonomousInit() {
-  //  m_autonomousCommand = m_chooser.getSelected();
-
-    /*
-     * String autoSelected = SmartDashboard.getString("Auto Selector",
-     * "Default"); switch(autoSelected) { case "My Auto": autonomousCommand
-     * = new MyAutoCommand(); break; case "Default Auto": default:
-     * autonomousCommand = new ExampleCommand(); break; }
+    /**
+     * This function is run when the robot is first started up and should be used
+     * for any initialization code.
      */
+    @Override
+    public void robotInit() {
 
-    // schedule the autonomous command (example)
-    //if (m_autonomousCommand != null) {
-     // m_autonomousCommand.start();
-   // }
-  }
+        oi = new OI();
+        oi.init();
 
-  /**
-   * This function is called periodically during autonomous.
-   */
-  @Override
-  public void autonomousPeriodic() {
-    Scheduler.getInstance().run();
-  }
+        for (TSubsystem subsystem : subsystemLs) {
+            subsystem.init();
+        }
 
-  @Override
-  public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
-   // if (m_autonomousCommand != null) {
-     // m_autonomousCommand.cancel();
-   // }
+        AutoSelector.init();
+    }
 
-  }
-
-  /**
-   * This function is called periodically during operator control.
-   */
-  @Override
-  public void teleopPeriodic() {
-    //.arcadeDrive(-m_leftStick.getY(Hand.kLeft), m_leftStick.getX(Hand.kLeft));
-    Scheduler.getInstance().run();
-    m_driveTrain.periodic();
-
-  }
-
-  /**
-   * This function is called periodically during test mode.
-   */
-  @Override
-  public void testPeriodic() {
+    /**
+     * This function is called once each time the robot enters Disabled mode. You
+     * can use it to reset any subsystem information you want to clear when the
+     * robot is disabled.
+     */
+    @Override
+    public void disabledInit() {
 
     }
-      //if forward both motors go
-     // m_leadMotor.set(m_joystick.getY());
-  }
+
+    @Override
+    public void disabledPeriodic() {
+
+        oi.updatePeriodic();
+
+        Scheduler.getInstance().run();
+        updatePeriodic();
+    }
+
+    /**
+     * This autonomous (along with the chooser code above) shows how to select
+     * between different autonomous modes using the dashboard. The sendable chooser
+     * code works with the Java SmartDashboard. If you prefer the LabVIEW Dashboard,
+     * remove all of the chooser code and uncomment the getString code to get the
+     * auto name from the text box below the Gyro
+     *
+     * You can add additional auto modes by adding additional commands to the
+     * chooser code above (like the commented example) or additional comparisons to
+     * the switch structure below with additional strings & commands.
+     */
+    @Override
+    public void autonomousInit() {
+
+        // Turn on the drive pids for auto
+        Robot.oi.setSpeedPidEnabled(true);
+        driveSubsystem.enableSpeedPids();
+
+        // Reset the gyro and the encoders
+        Robot.driveSubsystem.setGyroAngle(0);
+        Robot.driveSubsystem.resetEncoders();
+
+        // Initialize the robot command after initializing the game data
+        // because the game data will be used in the auto command.
+        autoCommand = new AutonomousCommand();
+        autoCommand.start();
+    }
+
+    /**
+     * This function is called periodically during autonomous
+     */
+    @Override
+    public void autonomousPeriodic() {
+
+        // Update the OI before running the commands
+        oi.updatePeriodic();
+
+        Scheduler.getInstance().run();
+
+        // Update all subsystems after running commands
+        updatePeriodic();
+    }
+
+    @Override
+    public void teleopInit() {
+
+        if (autoCommand != null) {
+            autoCommand.cancel();
+        }
+
+        // Turn off the drive PIDs
+        // Save the battery in teleop by using the
+        // SpeedController built in braking.
+        Robot.oi.setSpeedPidEnabled(false);
+        driveSubsystem.disableSpeedPids();
+
+    }
+
+    /**
+     * This function is called periodically during operator control
+     */
+    @Override
+    public void teleopPeriodic() {
+        
+        // Update the OI before running the commands
+        oi.updatePeriodic();
+        boolean forward = flightStick.getRawButton(kRelayForwardButton);
+        boolean backward = flightStick.getRawButton(kRelayBackwardButton);
+        Scheduler.getInstance().run();
+        /* if(flightStick.getRawButton(1)){
+            intake.set(.5);
+          }
+          else if(flightStick.getRawButton(2)){
+            intake.set(-.25);
+          }
+          else{
+            intake.set(0);
+          } */
+
+          if(forward && backward){
+              m_relay.set(Value.kOn);
+          }
+          else if(forward){
+              m_relay.set(Value.kForward);
+          }
+          else if(backward){
+              m_relay.set(Value.kReverse);
+          }
+          else{
+              m_relay.set(Value.kOff);
+          }
+
+
+
+        // Update all subsystems after running commands
+        updatePeriodic();
+    }
+
+    /**
+     * This function is called periodically during test mode
+     */
+    @Override
+    public void testPeriodic() {
+    }
+
+    /**
+     * Update periodic
+     */
+    private void updatePeriodic() {
+
+        // Update all subsystems
+        for (TSubsystem subsystem : subsystemLs) {
+            subsystem.updatePeriodic();
+        }
+    }
+}

@@ -1,26 +1,75 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
-
 package frc.robot;
+
+import com.torontocodingcollective.TConst;
+import com.torontocodingcollective.speedcontroller.TCanSpeedController.TCanSpeedControllerType;
 
 /**
  * The RobotMap is a mapping from the ports sensors and actuators are wired into
  * to a variable name. This provides flexibility changing wiring, makes checking
  * the wiring easier and significantly reduces the number of magic numbers
  * floating around.
+ * <p>
+ * This map is intended to define the wiring only. Robot constants should be put
+ * in {@link RobotConst}
  */
 public class RobotMap {
-  // For example to map the left and right motors, you could define the
-  // following variables to use with your drivetrain subsystem.
-  // public static int leftMotor = 1;
-  // public static int rightMotor = 2;
 
-  // If you are using multiple modules, make sure to define both the port
-  // number and the module. For example you with a rangefinder:
-  // public static int rangefinderPort = 1;
-  // public static int rangefinderModule = 1;
+    // ******************************************
+    // Speed Controllers and encoders
+    // CAN addresses
+    // ******************************************
+    public static final int                     LEFT_DRIVE_CAN_SPEED_CONTROLLER_ADDRESS;
+    public static final TCanSpeedControllerType LEFT_DRIVE_CAN_SPEED_CONTROLLER_TYPE;
+    public static final int                     LEFT_DRIVE_CAN_FOLLOWER_SPEED_CONTROLLER_ADDRESS;
+    public static final TCanSpeedControllerType LEFT_DRIVE_CAN_FOLLOWER_SPEED_CONTROLLER_TYPE;
+    public static final boolean                 LEFT_DRIVE_CAN_MOTOR_ISINVERTED;
+
+    public static final int                     RIGHT_DRIVE_CAN_SPEED_CONTROLLER_ADDRESS;
+    public static final TCanSpeedControllerType RIGHT_DRIVE_CAN_SPEED_CONTROLLER_TYPE;
+    public static final int                     RIGHT_DRIVE_CAN_FOLLOWER_SPEED_CONTROLLER_ADDRESS;
+    public static final TCanSpeedControllerType RIGHT_DRIVE_CAN_FOLLOWER_SPEED_CONTROLLER_TYPE;
+    public static final boolean                 RIGHT_DRIVE_CAN_MOTOR_ISINVERTED;
+
+    public static final boolean                 LEFT_DRIVE_CAN_ENCODER_ISINVERTED;
+    public static final boolean                 RIGHT_DRIVE_CAN_ENCODER_ISINVERTED;
+
+    // ******************************************
+    // Gyro Ports
+    // ******************************************
+    public static final int                     GYRO_PORT;
+    public static final boolean                 GYRO_ISINVERTED;
+
+    // ******************************************
+    // Pneumatics Ports
+    // ******************************************
+    public static final int                     SHIFTER_PNEUMATIC_PORT = 0;
+
+    // Initializers if this code will be deployed to more than one
+    // robot with different mappings
+    static {
+
+        switch (RobotConst.robot) {
+
+        case RobotConst.TEST_ROBOT:
+        default:
+            // CAN Constants
+            // Talon and Victor connected through the CAN Bus
+            LEFT_DRIVE_CAN_SPEED_CONTROLLER_ADDRESS           = 5;
+            LEFT_DRIVE_CAN_SPEED_CONTROLLER_TYPE              = TCanSpeedControllerType.TALON_SRX;
+            LEFT_DRIVE_CAN_FOLLOWER_SPEED_CONTROLLER_ADDRESS  = 3;
+            LEFT_DRIVE_CAN_FOLLOWER_SPEED_CONTROLLER_TYPE     = TCanSpeedControllerType.TALON_SRX;
+            LEFT_DRIVE_CAN_MOTOR_ISINVERTED                   = TConst.NOT_INVERTED;
+            LEFT_DRIVE_CAN_ENCODER_ISINVERTED                 = TConst.NOT_INVERTED;
+
+            RIGHT_DRIVE_CAN_SPEED_CONTROLLER_ADDRESS          = 4;
+            RIGHT_DRIVE_CAN_SPEED_CONTROLLER_TYPE             = TCanSpeedControllerType.TALON_SRX;
+            RIGHT_DRIVE_CAN_FOLLOWER_SPEED_CONTROLLER_ADDRESS = 2;
+            RIGHT_DRIVE_CAN_FOLLOWER_SPEED_CONTROLLER_TYPE    = TCanSpeedControllerType.TALON_SRX;
+            RIGHT_DRIVE_CAN_MOTOR_ISINVERTED                  = TConst.INVERTED;
+            RIGHT_DRIVE_CAN_ENCODER_ISINVERTED                = TConst.INVERTED;
+
+            GYRO_PORT       = 6;
+            GYRO_ISINVERTED = TConst.NOT_INVERTED;
+        }
+    }
 }
