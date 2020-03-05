@@ -1,6 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.       
-                 */
+/* Copyright (c) 2017-2020 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -13,12 +12,11 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
+import edu.wpi.first.wpilibj.Relay.Value;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -35,52 +33,46 @@ public class Robot extends TimedRobot {
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-  WPI_TalonFX _frontLeftMotor = new WPI_TalonFX(3);
-  WPI_TalonFX _frontRightMotor = new WPI_TalonFX(1);
-  WPI_TalonFX _backLeftMotor = new WPI_TalonFX(4);
-  WPI_TalonFX _backRightMotor = new WPI_TalonFX(2);
-  //WPI_VictorSPX intake = new WPI_VictorSPX(10);
-
-  /* Construct drivetrain by providing master motor controllers */
+  private final Joystick flightStickOne = new Joystick(0);
+  private final Joystick flightStickTwo = new Joystick(1);
+  private final WPI_TalonSRX intake = new WPI_TalonSRX(4);
+  WPI_TalonFX _frontLeftMotor = new WPI_TalonFX(10);
+  WPI_TalonFX _frontRightMotor = new WPI_TalonFX(11);
+  WPI_TalonFX _backLeftMotor = new WPI_TalonFX(12);
+  WPI_TalonFX _backRightMotor = new WPI_TalonFX(13);
+  WPI_TalonSRX intakeUpDown = new WPI_TalonSRX(5);
   DifferentialDrive _drive = new DifferentialDrive(_frontLeftMotor, _frontRightMotor);
-  
+  public static final Relay m_relay = new Relay(0);
+  public static final int kRelayForwardButton = 3;
+  public static final int kRelayBackwardButton= 4;
+  public WPI_TalonSRX m_shooterMotor = new WPI_TalonSRX(1);//placeholder device number
+  public WPI_TalonSRX m_shooterMotor2 = new WPI_TalonSRX(2);//placeholder device number
 
-  /* Joystick for control */
-Joystick _joy = new Joystick(0);
-CameraServer server;
-//Compressor c = new Compressor(0);
-
-
-    
-    //DoubleSolenoid exampleDouble = new DoubleSolenoid(0, 1);
-
+  CameraServer server;
   /**
    * This function is run when the robot is first started up and should be
-   * used for any initialization code. 
+   * used for any initialization code.
    */
   @Override
   public void robotInit() {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+
     _frontLeftMotor.configFactoryDefault();
     _frontRightMotor.configFactoryDefault();
     _backLeftMotor.configFactoryDefault();
     _backRightMotor.configFactoryDefault();
     //intake.configFactoryDefault();
     _frontLeftMotor.setInverted(false); // <<<<<< Adjust this until robot drives forward when stick is forward
-    _frontRightMotor.setInverted(false);
-    _backRightMotor.setInverted(false);
-    //_backLeftMotor.setInverted(true);
-    //_backRightMotor.setInverted(true);
-    //intake.setInverted(false);
+    _frontRightMotor.setInverted(true);
     server = CameraServer.getInstance();
     server.startAutomaticCapture();
 
     _backLeftMotor.follow(_frontLeftMotor);
     _backRightMotor.follow(_frontRightMotor);
-
-    
+    m_shooterMotor2.follow(m_shooterMotor);
+    m_shooterMotor2.setInverted(true);
   }
 
   /**
@@ -130,14 +122,20 @@ CameraServer server;
   }
 
   /**
+   * This function is called once when teleop is enabled.
+   */
+  @Override
+  public void teleopInit() {
+  }
+
+  /**
    * This function is called periodically during operator control.
    */
   @Override
   public void teleopPeriodic() {
 
-    /* Gamepad processing */
-		double forward = -0.75 * _joy.getY(Hand.kLeft);	// Sign this so forward is positive
-    double turn = +0.5 * _joy.getX(Hand.kLeft);       // Sign this so right is positive
+    double forward = -0.75 * flightStickOne.getY(Hand.kLeft);	// Sign this so forward is positive
+    double turn = +0.5 * flightStickOne.getX(Hand.kLeft);       // Sign this so right is positive
     
         
         /* Deadband - within 10% joystick, make it zero */
@@ -147,30 +145,75 @@ CameraServer server;
 		if (Math.abs(turn) < 0.10) {
 			turn = 0;
     }
-
-   /*  if(_joy.getRawButton(1)){
-      exampleDouble.set(Value.kForward);
-    }
-  
-    if(_joy.getRawButton(2)){
-      exampleDouble.set(Value.kReverse);
-    } */
-    //intake.set(-_joy.getRawAxis(3)/2);        
-		/**
-		 * Print the joystick values to sign them, comment
-		 * out this line after checking the joystick directions. 
-		 */
-        System.out.println("JoyY:" + forward + "  turn:" + turn );
-        
-		/**
-		 * Drive the robot, 
-		 */
     _drive.arcadeDrive(forward, (turn));
-    //SmartDashboard.putNumber("Intake Speed", -_joy.getRawAxis(3)/2);
-    SmartDashboard.putNumber("FWD Speed", forward);
-    SmartDashboard.putNumber("TURN Speed", turn);
-    SmartDashboard.updateValues();
 
+
+    if(flightStickTwo.getRawButton(1)){
+      intake.set(0.5);
+    }
+    if(flightStickTwo.getRawButton(2)){
+      intake.set(-0.25);
+    }
+    else{
+      intake.set(0);
+    }
+
+    boolean forwardRelay = flightStickTwo.getRawButton(kRelayForwardButton);
+    boolean backward = flightStickTwo.getRawButton(kRelayBackwardButton);
+
+    if(forwardRelay && backward){
+      m_relay.set(Value.kOn);
+  }
+  else if(forwardRelay){
+      m_relay.set(Value.kForward);
+  }
+  else if(backward){
+      m_relay.set(Value.kReverse);
+  }
+  else{
+      m_relay.set(Value.kOff);
+  }
+  double shootSpeed = flightStickTwo.getRawAxis(3);
+  
+  if(flightStickTwo.getRawButton(10)){
+    intakeUpDown.set(0.40);
+  }
+  if(flightStickTwo.getRawButton(9)){
+    intakeUpDown.set(-0.40);
+  }
+  else{
+    intakeUpDown.set(0);
+  }
+
+
+  if(flightStickTwo.getRawButton(8)){
+    m_shooterMotor.set(shootSpeed);
+  }
+  else{
+    m_shooterMotor.set(0);
+  }
+  }
+  
+
+  /**
+   * This function is called once when the robot is disabled.
+   */
+  @Override
+  public void disabledInit() {
+  }
+
+  /**
+   * This function is called periodically when disabled.
+   */
+  @Override
+  public void disabledPeriodic() {
+  }
+
+  /**
+   * This function is called once when test mode is enabled.
+   */
+  @Override
+  public void testInit() {
   }
 
   /**
